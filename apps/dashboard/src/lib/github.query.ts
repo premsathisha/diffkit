@@ -37,6 +37,7 @@ import {
 	searchCommandPaletteGitHub,
 } from "./github.functions";
 import { githubCachePolicy } from "./github-cache-policy";
+import { ensureDefinedQueryData } from "./query-data";
 
 type RepoState = "all" | "closed" | "open";
 type PullSort = "created" | "long-running" | "popularity" | "updated";
@@ -307,7 +308,11 @@ export function githubPullPageQueryOptions(
 ) {
 	return queryOptions({
 		queryKey: githubQueryKeys.pulls.page(scope, input),
-		queryFn: () => getPullPageData({ data: input }),
+		queryFn: () =>
+			ensureDefinedQueryData(
+				() => getPullPageData({ data: input }),
+				"getPullPageData",
+			),
 		staleTime: githubCachePolicy.detail.staleTimeMs,
 		gcTime: githubCachePolicy.detail.gcTimeMs,
 		meta: tabPersistedMeta,
