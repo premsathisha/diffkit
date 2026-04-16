@@ -1,9 +1,10 @@
 import { CommentIcon, IssuesIcon } from "@diffkit/icons";
 import { cn } from "@diffkit/ui/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { memo } from "react";
 import { formatRelativeTime } from "#/lib/format-relative-time";
 import type { IssueSummary } from "#/lib/github.types";
+import { preloadRouteOnce } from "#/lib/route-preload";
 
 function getIssueStateProps(issue: IssueSummary) {
 	if (issue.state === "closed") {
@@ -22,10 +23,18 @@ export const IssueRow = memo(function IssueRow({
 }) {
 	const { color } = getIssueStateProps(issue);
 	const href = `/${issue.repository.owner}/${issue.repository.name}/issues/${issue.number}`;
+	const router = useRouter();
+	const preloadDetail = () => {
+		void preloadRouteOnce(router, href);
+	};
 
 	return (
 		<Link
 			to={href}
+			preload={false}
+			onMouseEnter={preloadDetail}
+			onFocus={preloadDetail}
+			onTouchStart={preloadDetail}
 			className="group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-surface-1"
 		>
 			<div className={cn("mt-[3px] shrink-0", color)}>

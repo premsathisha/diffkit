@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react";
 import { githubCachePolicy } from "./github-cache-policy";
 import { readStoredTabs, type Tab, useTabs } from "./tab-store";
 
-const GITHUB_QUERY_CACHE_STORAGE_KEY = "diffkit:github-query-cache:v1";
+const GITHUB_QUERY_CACHE_STORAGE_KEY = "diffkit:github-query-cache:v3";
 const GITHUB_QUERY_CACHE_MAX_AGE_MS = githubCachePolicy.viewer.gcTimeMs;
 
 type PersistedGitHubQueryCache = {
@@ -186,30 +186,44 @@ function persistGitHubQueryCache(queryClient: QueryClient) {
 	}
 
 	let timeoutId: number | undefined;
+	let persistenceDisabled = false;
 
 	const writeCache = () => {
-		const clientState = dehydrate(queryClient, {
-			shouldDehydrateQuery: shouldPersistGitHubQuery,
-		});
-
-		if (clientState.queries.length === 0) {
-			window.localStorage.removeItem(GITHUB_QUERY_CACHE_STORAGE_KEY);
+		if (persistenceDisabled) {
 			return;
 		}
 
-		const payload: PersistedGitHubQueryCache = {
-			version: 1,
-			persistedAt: Date.now(),
-			clientState,
-		};
+		try {
+			const clientState = dehydrate(queryClient, {
+				shouldDehydrateQuery: shouldPersistGitHubQuery,
+			});
 
-		window.localStorage.setItem(
-			GITHUB_QUERY_CACHE_STORAGE_KEY,
-			JSON.stringify(payload),
-		);
+			if (clientState.queries.length === 0) {
+				window.localStorage.removeItem(GITHUB_QUERY_CACHE_STORAGE_KEY);
+				return;
+			}
+
+			const payload: PersistedGitHubQueryCache = {
+				version: 1,
+				persistedAt: Date.now(),
+				clientState,
+			};
+
+			window.localStorage.setItem(
+				GITHUB_QUERY_CACHE_STORAGE_KEY,
+				JSON.stringify(payload),
+			);
+		} catch {
+			// Best effort: disable persistence for this session if storage is unavailable.
+			persistenceDisabled = true;
+		}
 	};
 
 	const scheduleWrite = () => {
+		if (persistenceDisabled) {
+			return;
+		}
+
 		if (typeof timeoutId !== "undefined") {
 			window.clearTimeout(timeoutId);
 		}
@@ -222,6 +236,10 @@ function persistGitHubQueryCache(queryClient: QueryClient) {
 	});
 
 	const flushOnUnload = () => {
+		if (persistenceDisabled) {
+			return;
+		}
+
 		if (typeof timeoutId !== "undefined") {
 			window.clearTimeout(timeoutId);
 			timeoutId = undefined;

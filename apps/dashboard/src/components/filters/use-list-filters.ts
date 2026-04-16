@@ -33,6 +33,7 @@ export type SortOption = {
 
 export type FilterableItem = {
 	id: number;
+	number?: number;
 	title: string;
 	updatedAt: string;
 	createdAt: string;
@@ -229,6 +230,11 @@ export function applyFilters<T extends FilterableItem>(
 	state: ListFilterState<T>,
 ): T[] {
 	const query = state.searchQuery.toLowerCase().trim();
+	const isHashNumberQuery = query.startsWith("#");
+	const normalizedNumberQuery = isHashNumberQuery
+		? query.slice(1).trim()
+		: query;
+	const isNumericQuery = /^\d+$/.test(normalizedNumberQuery);
 	const sortFn =
 		state.sortOptions.find((s) => s.id === state.sortId)?.compare ??
 		state.sortOptions[0].compare;
@@ -237,12 +243,26 @@ export function applyFilters<T extends FilterableItem>(
 
 	// Text search
 	if (query) {
-		result = result.filter(
-			(item) =>
+		result = result.filter((item) => {
+			if (isHashNumberQuery) {
+				if (normalizedNumberQuery.length === 0) {
+					return true;
+				}
+				if (!isNumericQuery || typeof item.number !== "number") {
+					return false;
+				}
+				return String(item.number).startsWith(normalizedNumberQuery);
+			}
+
+			return (
 				item.title.toLowerCase().includes(query) ||
 				item.repository.fullName.toLowerCase().includes(query) ||
-				(item.author?.login.toLowerCase().includes(query) ?? false),
-		);
+				(item.author?.login.toLowerCase().includes(query) ?? false) ||
+				(typeof item.number === "number" &&
+					isNumericQuery &&
+					String(item.number).startsWith(normalizedNumberQuery))
+			);
+		});
 	}
 
 	// Active filters (AND across fields, OR within a field)

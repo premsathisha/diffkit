@@ -80,6 +80,32 @@ export function invalidateTargets(
 	return invalidatedCount;
 }
 
+function getLatestLocalDataTimestampForSignal(
+	queryClient: ReturnType<typeof useQueryClient>,
+	targets: readonly GitHubSignalStreamTarget[],
+	signalKey: string,
+) {
+	let latestLocalDataTimestamp = 0;
+
+	for (const target of targets) {
+		if (!target.signalKeys.includes(signalKey)) {
+			continue;
+		}
+
+		const queryState = queryClient.getQueryState(target.queryKey);
+		if (!queryState || queryState.dataUpdatedAt === 0) {
+			continue;
+		}
+
+		latestLocalDataTimestamp = Math.max(
+			latestLocalDataTimestamp,
+			queryState.dataUpdatedAt,
+		);
+	}
+
+	return latestLocalDataTimestamp;
+}
+
 function useGitHubSignalStreamWebSocket(
 	targets: readonly GitHubSignalStreamTarget[],
 	signalKeysKey: string,
@@ -229,32 +255,45 @@ function useGitHubSignalPoll(
 
 				if (disposed) return;
 
-				const updatedKeys: string[] = [];
+				const currentTargets = targetsRef.current;
+				const updatedKeys = new Set<string>();
 				for (const signal of signals) {
 					const lastSeen = lastSeenTimestamps.get(signal.signalKey);
 					if (lastSeen === undefined) {
 						lastSeenTimestamps.set(signal.signalKey, signal.updatedAt);
+						const latestLocalDataTimestamp =
+							getLatestLocalDataTimestampForSignal(
+								queryClient,
+								currentTargets,
+								signal.signalKey,
+							);
+						if (
+							latestLocalDataTimestamp > 0 &&
+							signal.updatedAt > latestLocalDataTimestamp
+						) {
+							updatedKeys.add(signal.signalKey);
+						}
 					} else if (signal.updatedAt > lastSeen) {
 						lastSeenTimestamps.set(signal.signalKey, signal.updatedAt);
-						updatedKeys.push(signal.signalKey);
+						updatedKeys.add(signal.signalKey);
 					}
 				}
 
-				if (updatedKeys.length > 0) {
+				if (updatedKeys.size > 0) {
+					const updatedSignalKeys = [...updatedKeys];
 					debug("github-signal-poll", "detected missed signals", {
-						updatedKeys,
+						updatedKeys: updatedSignalKeys,
 					});
 
-					const currentTargets = targetsRef.current;
 					const invalidatedCount = invalidateTargets(
 						queryClient,
 						currentTargets,
-						new Set(updatedKeys),
+						updatedKeys,
 						"github-signal-poll",
 					);
 
 					debug("github-signal-poll", "poll processed", {
-						updatedKeys,
+						updatedKeys: updatedSignalKeys,
 						invalidatedCount,
 						totalTargets: currentTargets.length,
 					});
