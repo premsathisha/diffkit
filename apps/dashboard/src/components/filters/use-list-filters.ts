@@ -266,6 +266,15 @@ export function applyFilters<T extends FilterableItem>(
 		result = result.filter((item) => def.match(item, filter.values));
 	}
 
+	// Upstream list merges can occasionally surface duplicate items.
+	// Keep first occurrence by GitHub item id so search/results stay stable.
+	const deduped = new Map<number, T>();
+	for (const item of result) {
+		if (!deduped.has(item.id)) {
+			deduped.set(item.id, item);
+		}
+	}
+
 	// Sort
-	return [...result].sort(sortFn);
+	return [...deduped.values()].sort(sortFn);
 }
