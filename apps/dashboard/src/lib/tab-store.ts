@@ -10,6 +10,7 @@ export interface Tab {
 	url: string;
 	repo: string;
 	iconColor: string;
+	pullState?: "open" | "closed" | "merged" | "draft";
 	avatarUrl?: string;
 	additions?: number;
 	deletions?: number;
@@ -88,6 +89,7 @@ export function addTab(tab: Tab) {
 			existing.url === tab.url &&
 			existing.title === tab.title &&
 			existing.iconColor === tab.iconColor &&
+			existing.pullState === tab.pullState &&
 			existing.additions === tab.additions &&
 			existing.deletions === tab.deletions &&
 			existing.merged === tab.merged

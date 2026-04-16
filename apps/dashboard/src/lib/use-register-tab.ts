@@ -9,6 +9,7 @@ export function useRegisterTab(
 		url: string;
 		repo: string;
 		iconColor: string;
+		pullState?: "open" | "closed" | "merged" | "draft";
 		avatarUrl?: string;
 		additions?: number;
 		deletions?: number;
@@ -29,6 +30,7 @@ export function useRegisterTab(
 			url: tab.url,
 			repo: tab.repo,
 			iconColor: tab.iconColor,
+			pullState: tab.pullState,
 			avatarUrl: tab.avatarUrl,
 			additions: tab.additions,
 			deletions: tab.deletions,
@@ -41,6 +43,7 @@ export function useRegisterTab(
 		tab?.url,
 		tab?.repo,
 		tab?.iconColor,
+		tab?.pullState,
 		tab?.avatarUrl,
 		tab?.additions,
 		tab?.deletions,

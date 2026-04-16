@@ -116,6 +116,16 @@ export function PullDetailContent({
 	const eventPagination = pageQuery.data?.eventPagination;
 	const headRefDeleted = pageQuery.data?.headRefDeleted ?? false;
 	const viewer = viewerQuery.data ?? null;
+	const prState = pr
+		? pr.isDraft
+			? "draft"
+			: pr.isMerged || pr.mergedAt || pr.state === "merged"
+				? "merged"
+				: pr.state === "closed"
+					? "closed"
+					: "open"
+		: undefined;
+	const prStateColor = pr ? getPrStateConfig(pr).color : undefined;
 
 	useRegisterTab(
 		registerTab && pr
@@ -125,7 +135,8 @@ export function PullDetailContent({
 					number: pr.number,
 					url: `/${owner}/${repo}/pull/${pullNumber}`,
 					repo: `${owner}/${repo}`,
-					iconColor: getPrStateConfig(pr).color,
+					iconColor: prStateColor ?? "text-green-500",
+					pullState: prState,
 					merged: pr.isMerged,
 				}
 			: null,

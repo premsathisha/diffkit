@@ -4224,6 +4224,21 @@ function mergeMyIssuesResults(results: MyIssuesResult[]): MyIssuesResult {
 	};
 }
 
+function mergeCachedMyPullsResult(
+	existing: MyPullsResult,
+	fresh: MyPullsResult,
+): MyPullsResult {
+	if (!fresh.timedOut && !fresh.forbiddenOrgs?.length) {
+		return fresh;
+	}
+
+	return {
+		...mergeMyPullsResults([existing, fresh]),
+		forbiddenOrgs: fresh.forbiddenOrgs,
+		timedOut: fresh.timedOut,
+	};
+}
+
 function buildSourceSearchQuery({
 	itemType,
 	role,
@@ -4238,7 +4253,7 @@ function buildSourceSearchQuery({
 	return buildUserSearchQuery({
 		itemType,
 		role,
-		state: "open",
+		state: itemType === "pr" ? "all" : "open",
 		username,
 		owner: source.owner?.login,
 		ownerType: source.owner?.targetType,
@@ -4255,13 +4270,13 @@ async function getMyPullsResult({
 }) {
 	return getOrRevalidateGitHubResource<MyPullsResult>({
 		userId: context.session.user.id,
-		resource: "pulls.mine.graphql.v2",
+		resource: "pulls.mine.graphql.v4",
 		params: { username },
 		freshForMs: githubCachePolicy.list.staleTimeMs,
 		signalKeys: [githubRevalidationSignalKeys.pullsMine],
 		namespaceKeys: [githubRevalidationSignalKeys.pullsMine],
 		cacheMode: "split",
-		merge: (existing, fresh) => mergeMyPullsResults([existing, fresh]),
+		merge: mergeCachedMyPullsResult,
 		fetcher: async () => {
 			const deadlineAt = Date.now() + MY_SEARCH_TOTAL_TIMEOUT_MS;
 			const sources = await getMySearchSources(context, username, deadlineAt);

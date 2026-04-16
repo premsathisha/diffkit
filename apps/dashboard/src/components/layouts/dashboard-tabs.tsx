@@ -2,6 +2,9 @@ import {
 	ArchiveIcon,
 	ChevronRightIcon,
 	CloseIcon,
+	GitMergeIcon,
+	GitPullRequestClosedIcon,
+	GitPullRequestDraftIcon,
 	GitPullRequestIcon,
 	IssuesIcon,
 	Remove01Icon,
@@ -34,6 +37,32 @@ const tabIconMap = {
 	review: ReviewsIcon,
 	repo: ArchiveIcon,
 } as const;
+
+function getTabIcon(tab: Tab) {
+	if (tab.type !== "pull" && tab.type !== "review") {
+		return tabIconMap[tab.type];
+	}
+	const pullState =
+		tab.pullState ??
+		(tab.iconColor === "text-purple-500"
+			? "merged"
+			: tab.iconColor === "text-red-500"
+				? "closed"
+				: tab.iconColor === "text-muted-foreground"
+					? "draft"
+					: "open");
+
+	if (pullState === "draft") {
+		return GitPullRequestDraftIcon;
+	}
+	if (pullState === "merged") {
+		return GitMergeIcon;
+	}
+	if (pullState === "closed") {
+		return GitPullRequestClosedIcon;
+	}
+	return GitPullRequestIcon;
+}
 
 function useScrollShadows(tabCount: number) {
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -222,7 +251,7 @@ export function DashboardTabs({ tabsReady, routerRef }: DashboardTabsProps) {
 								updateScrollState={updateScrollState}
 							/>
 							{openTabs.map((tab, index) => {
-								const Icon = tabIconMap[tab.type];
+								const Icon = getTabIcon(tab);
 								return (
 									<DetailTab
 										key={tab.id}

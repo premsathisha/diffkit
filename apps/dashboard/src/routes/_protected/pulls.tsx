@@ -146,8 +146,8 @@ function PullRequestsPage() {
 								Pull Requests
 							</h1>
 							<p className="text-sm text-muted-foreground">
-								<span className="tabular-nums">{totalPulls}</span> open pulls
-								across your queues
+								<span className="tabular-nums">{totalPulls}</span> pulls across
+								your queues
 							</p>
 						</div>
 

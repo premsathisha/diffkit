@@ -258,6 +258,16 @@ export function ReviewPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [fileSheetOpen, setFileSheetOpen] = useState(false);
 	const isDesktop = useIsDesktop();
+	const prState = pr
+		? pr.isDraft
+			? "draft"
+			: pr.isMerged || pr.mergedAt || pr.state === "merged"
+				? "merged"
+				: pr.state === "closed"
+					? "closed"
+					: "open"
+		: undefined;
+	const prStateColor = pr ? getPrStateConfig(pr).color : undefined;
 
 	useRegisterTab(
 		pr
@@ -267,7 +277,8 @@ export function ReviewPage() {
 					number: pr.number,
 					url: `/${owner}/${repo}/review/${pullId}`,
 					repo: `${owner}/${repo}`,
-					iconColor: getPrStateConfig(pr).color,
+					iconColor: prStateColor ?? "text-green-500",
+					pullState: prState,
 					additions: pr.additions,
 					deletions: pr.deletions,
 					merged: pr.isMerged,

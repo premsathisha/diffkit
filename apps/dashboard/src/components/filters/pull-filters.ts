@@ -23,6 +23,54 @@ function asPull(item: FilterableItem): PullFilterableItem {
 	return item as PullFilterableItem;
 }
 
+const pullStatusFilterOptions = [
+	{ value: "open", label: "Open", icon: GitPullRequestIcon },
+	{ value: "draft", label: "Draft", icon: GitPullRequestDraftIcon },
+	{ value: "merged", label: "Merged", icon: GitMergeIcon },
+	{ value: "closed", label: "Closed", icon: GitPullRequestClosedIcon },
+] as const;
+
+const pullStatusColorMap: Record<string, string> = {
+	open: "text-green-500",
+	draft: "text-muted-foreground",
+	merged: "text-purple-500",
+	closed: "text-red-500",
+};
+
+function getPullStatusFilterOptions() {
+	return pullStatusFilterOptions.map((status) => ({
+		value: status.value,
+		label: status.label,
+		icon: createElement(status.icon, {
+			size: 14,
+			className: pullStatusColorMap[status.value],
+		}),
+	}));
+}
+
+function getPullStatusValue(pull: PullFilterableItem) {
+	if (pull.mergedAt || pull.state === "merged") return "merged";
+	if (pull.state === "closed") return "closed";
+	if (pull.isDraft) return "draft";
+	return "open";
+}
+
+function matchPullStatus(item: FilterableItem, values: Set<string>) {
+	if (values.has("all")) return true;
+
+	const validValues = pullStatusFilterOptions.filter((status) =>
+		values.has(status.value),
+	);
+	if (
+		validValues.length === 0 ||
+		validValues.length === pullStatusFilterOptions.length
+	) {
+		return true;
+	}
+
+	return values.has(getPullStatusValue(asPull(item)));
+}
+
 export const pullFilterDefs: FilterDefinition[] = [
 	{
 		id: "repo",
@@ -70,49 +118,8 @@ export const pullFilterDefs: FilterDefinition[] = [
 		id: "status",
 		label: "Status",
 		icon: CircleIcon,
-		extractOptions: (items) => {
-			const statuses = new Set<string>();
-			for (const item of items) {
-				const pull = asPull(item);
-				if (pull.mergedAt) statuses.add("merged");
-				else if (pull.state === "closed") statuses.add("closed");
-				else if (pull.isDraft) statuses.add("draft");
-				else statuses.add("open");
-			}
-			const all: {
-				value: string;
-				label: string;
-				icon: React.ComponentType<{ size?: number; className?: string }>;
-			}[] = [
-				{ value: "open", label: "Open", icon: GitPullRequestIcon },
-				{ value: "draft", label: "Draft", icon: GitPullRequestDraftIcon },
-				{ value: "merged", label: "Merged", icon: GitMergeIcon },
-				{ value: "closed", label: "Closed", icon: GitPullRequestClosedIcon },
-			];
-			const colorMap: Record<string, string> = {
-				open: "text-green-500",
-				draft: "text-muted-foreground",
-				merged: "text-purple-500",
-				closed: "text-red-500",
-			};
-			return all
-				.filter((s) => statuses.has(s.value))
-				.map((s) => ({
-					value: s.value,
-					label: s.label,
-					icon: createElement(s.icon, {
-						size: 14,
-						className: colorMap[s.value],
-					}),
-				}));
-		},
-		match: (item, values) => {
-			const pull = asPull(item);
-			if (pull.mergedAt) return values.has("merged");
-			if (pull.state === "closed") return values.has("closed");
-			if (pull.isDraft) return values.has("draft");
-			return values.has("open");
-		},
+		extractOptions: getPullStatusFilterOptions,
+		match: matchPullStatus,
 	},
 ];
 
@@ -122,36 +129,8 @@ export const repoPullFilterDefs: FilterDefinition[] = [
 		id: "status",
 		label: "Status",
 		icon: CircleIcon,
-		extractOptions: () => {
-			const colorMap: Record<string, string> = {
-				open: "text-green-500",
-				draft: "text-muted-foreground",
-				merged: "text-purple-500",
-				closed: "text-red-500",
-			};
-			return (
-				[
-					{ value: "open", label: "Open", icon: GitPullRequestIcon },
-					{ value: "draft", label: "Draft", icon: GitPullRequestDraftIcon },
-					{ value: "merged", label: "Merged", icon: GitMergeIcon },
-					{ value: "closed", label: "Closed", icon: GitPullRequestClosedIcon },
-				] as const
-			).map((s) => ({
-				value: s.value,
-				label: s.label,
-				icon: createElement(s.icon, {
-					size: 14,
-					className: colorMap[s.value],
-				}),
-			}));
-		},
-		match: (item, values) => {
-			const pull = asPull(item);
-			if (pull.mergedAt) return values.has("merged");
-			if (pull.state === "closed") return values.has("closed");
-			if (pull.isDraft) return values.has("draft");
-			return values.has("open");
-		},
+		extractOptions: getPullStatusFilterOptions,
+		match: matchPullStatus,
 	},
 	{
 		id: "author",

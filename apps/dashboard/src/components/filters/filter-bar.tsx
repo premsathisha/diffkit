@@ -441,20 +441,19 @@ function ValuePickerInline({
 							key={opt.value}
 							type="button"
 							onClick={() => onToggle(opt.value)}
-							className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2"
+							className={cn(
+								"flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2",
+								isSelected && "text-foreground",
+							)}
 						>
-							<span
-								className={cn(
-									"flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
-									isSelected
-										? "border-primary bg-primary text-primary-foreground"
-										: "border-border/60",
-								)}
-							>
-								{isSelected && <CheckIcon size={11} />}
-							</span>
 							{opt.icon && <span className="shrink-0">{opt.icon}</span>}
 							<span className="min-w-0 flex-1 truncate">{opt.label}</span>
+							{isSelected && (
+								<CheckIcon
+									size={13}
+									className="ml-auto shrink-0 text-muted-foreground"
+								/>
+							)}
 						</button>
 					);
 				})}
@@ -513,20 +512,19 @@ function ValuePicker({
 							key={opt.value}
 							type="button"
 							onClick={() => onToggle(opt.value)}
-							className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2"
+							className={cn(
+								"flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2",
+								isSelected && "text-foreground",
+							)}
 						>
-							<span
-								className={cn(
-									"flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
-									isSelected
-										? "border-primary bg-primary text-primary-foreground"
-										: "border-border/60",
-								)}
-							>
-								{isSelected && <CheckIcon size={11} />}
-							</span>
 							{opt.icon && <span className="shrink-0">{opt.icon}</span>}
 							<span className="min-w-0 flex-1 truncate">{opt.label}</span>
+							{isSelected && (
+								<CheckIcon
+									size={13}
+									className="ml-auto shrink-0 text-muted-foreground"
+								/>
+							)}
 						</button>
 					);
 				})}
