@@ -1,5 +1,5 @@
 import {
-	FolderLibraryIcon,
+	ArchiveIcon,
 	GitPullRequestIcon,
 	HomeIcon,
 	InboxIcon,
@@ -83,7 +83,7 @@ export function DashboardMobileNav({
 	const navItems: MobileNavItem[] = [
 		{ to: "/", label: "Overview", icon: HomeIcon },
 		{ to: "/inbox", label: "Inbox", icon: InboxIcon },
-		{ to: "/repos", label: "Repos", icon: FolderLibraryIcon },
+		{ to: "/repos", label: "Repos", icon: ArchiveIcon },
 		{
 			to: "/pulls",
 			label: "Pulls",
