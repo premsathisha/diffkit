@@ -289,6 +289,7 @@ export function DashboardTopbar({
 								<Link to="/repos">
 									<ArchiveIcon size={16} strokeWidth={2} />
 									Repositories
+									<DropdownMenuShortcut keys={["G", "O"]} />
 								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem asChild>
